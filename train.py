@@ -680,10 +680,10 @@ def __train_step(device, phase, epoch, global_step, global_test_step,
 
 
 def train_loop(device, model, data_loaders, optimizer, writer, checkpoint_dir=None):
-    if is_mulaw_quantize(hparams.input_type):
+    if is_mulaw_quantize(hparams.input_type):    # raw
         criterion = MaskedCrossEntropyLoss()
     else:
-        criterion = DiscretizedMixturelogisticLoss()
+        criterion = DiscretizedMixturelogisticLoss()     # go here
 
     if hparams.exponential_moving_average:
         ema = ExponentialMovingAverage(hparams.ema_decay)
@@ -940,7 +940,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # Model
-    model = build_model().to(device)
+    model = build_model().to(device)  # create a WaveNet model
 
     receptive_field = model.receptive_field
     print("Receptive field (samples / ms): {} / {}".format(
@@ -966,7 +966,7 @@ if __name__ == "__main__":
     writer = SummaryWriter(log_dir=log_event_path)
 
     # Train!
-    try:
+    try:           #cpu    wavenet  
         train_loop(device, model, data_loaders, optimizer, writer,
                    checkpoint_dir=checkpoint_dir)
     except KeyboardInterrupt:
