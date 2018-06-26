@@ -3,6 +3,7 @@ from functools import partial
 import numpy as np
 import os
 import audio
+import sys
 
 from nnmnkwii import preprocessing as P
 from hparams import hparams
@@ -18,23 +19,44 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
     executor = ProcessPoolExecutor(max_workers=num_workers)
     futures = []
     index = 1
+    #print("in_dir:" + in_dir)
+    #print("in_dir2:" + in_dir.strip('/'))
     for root, dirs, files in os.walk(in_dir):
-        for dir in dirs:
-            transcript_file = os.path.join(in_dir, dir, "transcript_utf8.txt")
-            print("transcript_file: " + transcript_file)
-            sys.exit(0)
-            with open(transcript_file, encoding='utf-8') as f:
-                wav_path = os.path.join(in_dir, dir, '%s.wav' % parts[0])
-
-    with open(os.path.join(in_dir, 'metadata.csv'), encoding='utf-8') as f:
-        for line in f:
-            parts = line.strip().split('|')
-            wav_path = os.path.join(in_dir, 'wavs', '%s.wav' % parts[0])
-            text = parts[2]
-            futures.append(executor.submit(
-                partial(_process_utterance, out_dir, index, wav_path, text)))
-            index += 1
+        print(root[len(in_dir.rstrip('/')) + 1:])
+        if root[len(in_dir)+1:].count(os.sep) < 1 and len(root[len(in_dir)+1:]) != 0:
+            for file in files:
+                if file == 'transcript_utf8.txt':
+                    transcript_file = os.path.join(root, file)
+                    print("transcript_file: " + transcript_file)
+                    with open(os.path.join(root, file), encoding='utf-8') as f:
+                        for line in f:
+                            parts = line.strip().split(':')
+                            wav_path = os.path.join(root, 'wav', '%s.wav' % parts[0])
+                            text = parts[1]
+                            futures.append(executor.submit(
+                                partial(_process_utterance, out_dir, index, wav_path, text)))
+                            index += 1
     return [future.result() for future in tqdm(futures)]
+                #print(os.path.join(root, file))
+        #for dir in dirs:
+            #transcript_file = os.path.join(in_dir, dir, "transcript_utf8.txt")
+            #transcript_file = os.path.join(root, "transcript_utf8.txt")
+            #transcript_file = os.path.join(root, dir)
+            #print("transcript_file: " + transcript_file)
+
+#    sys.exit(0)
+            #with open(transcript_file, encoding='utf-8') as f:
+                #wav_path = os.path.join(in_dir, dir, '%s.wav' % parts[0])
+
+#    with open(os.path.join(in_dir, 'metadata.csv'), encoding='utf-8') as f:
+#        for line in f:
+#            parts = line.strip().split('|')
+#            wav_path = os.path.join(in_dir, 'wavs', '%s.wav' % parts[0])
+#            text = parts[2]
+#            futures.append(executor.submit(
+#                partial(_process_utterance, out_dir, index, wav_path, text)))
+#            index += 1
+#    return [future.result() for future in tqdm(futures)]
 
 
 def _process_utterance(out_dir, index, wav_path, text):
