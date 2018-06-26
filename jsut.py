@@ -19,7 +19,7 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
     futures = []
     index = 1
     for root, dirs, files in os.walk(in_dir):
-        for dir in dirs
+        for dir in dirs:
             transcript_file = os.path.join(in_dir, dir, "transcript_utf8.txt")
             print("transcript_file: " + transcript_file)
             sys.exit(0)
