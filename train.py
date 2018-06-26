@@ -637,9 +637,12 @@ def __train_step(device, phase, epoch, global_step, global_test_step,
     # NOTE: softmax is handled in F.cross_entrypy_loss
     # y_hat: (B x C x T)
 
-    # multi gpu support
-    # you must make sure that batch size % num gpu == 0
-    y_hat = torch.nn.parallel.data_parallel(model, (x, c, g, False))
+    if use_cuda:
+        # multi gpu support
+        # you must make sure that batch size % num gpu == 0
+        y_hat = torch.nn.parallel.data_parallel(model, (x, c, g, False))
+    else:
+        y_hat = model(x, c, g, False)
 
     if is_mulaw_quantize(hparams.input_type):
         # wee need 4d inputs for spatial cross entropy loss
@@ -794,6 +797,7 @@ def build_model():
         upsample_scales=hparams.upsample_scales,
         freq_axis_kernel_size=hparams.freq_axis_kernel_size,
         scalar_input=is_scalar_input(hparams.input_type),
+        legacy=hparams.legacy,
     )
     return model
 
@@ -929,7 +933,7 @@ if __name__ == "__main__":
     hparams.parse(args["--hparams"])
     assert hparams.name == "wavenet_vocoder"
     print(hparams_debug_string())
-    
+
     fs = hparams.sample_rate
 
     os.makedirs(checkpoint_dir, exist_ok=True)
